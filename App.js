@@ -1,6 +1,7 @@
 import React from "react";
 import { ActivityIndicator, Dimensions, TouchableOpacity } from "react-native";
 import { Camera } from "expo-camera";
+import * as FaceDetector from "expo-face-detector";
 import styled from "styled-components";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -26,6 +27,7 @@ export default class App extends React.Component {
   state = {
     hasPermission: null,
     cameraType: Camera.Constants.Type.front,
+    smileDetected: false,
   };
 
   componentDidMount = async () => {
@@ -50,8 +52,20 @@ export default class App extends React.Component {
     }
   };
 
+  onFacesDetected = ({ faces }) => {
+    const face = faces[0];
+    if (face) {
+      if (face.smilingProbability > 0.7) {
+        this.setState({
+          smileDetected: true,
+        });
+        console.log("take photo");
+      }
+    }
+  };
+
   render() {
-    const { hasPermission, cameraType } = this.state;
+    const { hasPermission, cameraType, smileDetected } = this.state;
     if (hasPermission === true) {
       return (
         <CenterView>
@@ -63,6 +77,11 @@ export default class App extends React.Component {
               overflow: "hidden",
             }}
             type={cameraType}
+            onFacesDetected={smileDetected ? null : this.onFacesDetected}
+            faceDetectorSettings={{
+              detectLandmarks: FaceDetector.Constants.Landmarks.all,
+              runClassifications: FaceDetector.Constants.Classifications.all,
+            }}
           />
           <IconBar>
             <TouchableOpacity onPress={this.switchCameraType}>
